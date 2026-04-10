@@ -1,5 +1,4 @@
 forntend
-
 📁 src/
 📁 app/ entry point
 App.jsx
