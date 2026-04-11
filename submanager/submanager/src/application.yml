@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres:BBhaGgPOKYiYfyZTBejNYQabcyJUyiDw@mainline.proxy.rlwy.net:45010/railway
+    url: postgresql://postgres:BBhaGgPOKYiYfyZTBejNYQabcyJUyiDw@mainline.proxy.rlwy.net:45010/railway
     username: postgres
     password: BBhaGgPOKYiYfyZTBejNYQabcyJUyiDw
   jpa:
