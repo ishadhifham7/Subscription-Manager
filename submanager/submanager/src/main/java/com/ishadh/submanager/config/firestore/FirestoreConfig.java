@@ -17,6 +17,8 @@ import org.springframework.core.io.ResourceLoader;
 @ConditionalOnProperty(name = "firebase.enabled", havingValue = "true")
 public class FirestoreConfig {
 
+    private static final String FIREBASE_APP_NAME = "submanager-app";
+
     private final ResourceLoader resourceLoader;
 
     @Value("${firebase.credentials.path}")
@@ -36,11 +38,12 @@ public class FirestoreConfig {
     public FirebaseApp firebaseApp() throws IOException {
         FirebaseOptions options = buildOptions();
 
-        if (FirebaseApp.getApps().isEmpty()) {
-            return FirebaseApp.initializeApp(options);
+        FirebaseApp existing = getFirebaseAppOrNull(FIREBASE_APP_NAME);
+        if (existing != null) {
+            existing.delete();
         }
 
-        return FirebaseApp.getInstance();
+        return FirebaseApp.initializeApp(options, FIREBASE_APP_NAME);
     }
 
     @Bean
@@ -64,6 +67,14 @@ public class FirestoreConfig {
             }
 
             return builder.build();
+        }
+    }
+
+    private FirebaseApp getFirebaseAppOrNull(String appName) {
+        try {
+            return FirebaseApp.getInstance(appName);
+        } catch (IllegalStateException ex) {
+            return null;
         }
     }
 }

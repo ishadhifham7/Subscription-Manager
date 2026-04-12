@@ -1,0 +1,51 @@
+package com.ishadh.submanager.modules.subscription;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class SubscriptionService {
+
+    @Autowired
+    private SubscriptionRepository repository;
+
+    public SubscriptionResponse createSubscription(SubscriptionRequest request) throws Exception {
+
+        Subscription sub = SubscriptionMapper.toEntity(request);
+
+        long nextBilling = calculateNextBilling(
+                sub.getBillingCycle(),
+                sub.getStartDate()
+        );
+
+        sub.setNextBillingDate(nextBilling);
+
+        Subscription saved = repository.save(sub);
+
+        return SubscriptionMapper.toResponse(saved);
+    }
+
+    public List<SubscriptionResponse> getAllSubscriptions() throws Exception {
+
+        return repository.findAll()
+                .stream()
+                .map(sub -> SubscriptionMapper.toResponse(sub))
+                .toList();
+    }
+
+    public boolean deleteSubscription(String id) throws Exception {
+        return repository.deleteById(id);
+    }
+
+    // 🔥 ENUM-based logic (clean & safe)
+    private long calculateNextBilling(BillingCycle cycle, long startDate) {
+
+        return switch (cycle) {
+            case WEEKLY -> startDate + (7L * 24 * 60 * 60 * 1000);
+            case MONTHLY -> startDate + (30L * 24 * 60 * 60 * 1000);
+            case YEARLY -> startDate + (365L * 24 * 60 * 60 * 1000);
+        };
+    }
+}
