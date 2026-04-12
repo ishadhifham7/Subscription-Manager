@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: submanager
+
+firebase:
+  enabled: true
+  project-id: subscription-manager-2b5bd
+  database-url: https://subscription-manager-2b5bd.firebaseio.com
+  credentials:
+    path: classpath:firebase-service-account.json
