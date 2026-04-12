@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { generateCalendar } from "../../utils/calenderUtils";
-import "./calendar.css";
+import "../layout/calender.css";
 
 interface Props {
   subscriptions?: Subscription[];
