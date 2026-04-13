@@ -32,6 +32,7 @@ export default function useRemainder() {
   const [upcomingRemainders, setUpcomingRemainders] = useState<
     UpcomingRemainderItem[]
   >([]);
+  const [totalPendingRemainders, setTotalPendingRemainders] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -47,16 +48,20 @@ export default function useRemainder() {
           subscriptions.map((subscription) => [subscription.id, subscription]),
         );
 
-        const nextItems: UpcomingRemainderItem[] = remainders
-          .filter((item) => item.status === "PENDING")
-          .sort((a, b) => a.nextBillingDate - b.nextBillingDate)
+        const pendingRemainders = remainders.filter(
+          (item) => item.status === "PENDING",
+        );
+
+        const nextItems: UpcomingRemainderItem[] = pendingRemainders
+          .sort((a, b) => a.reminderDate - b.reminderDate)
           .slice(0, MAX_UPCOMING_ITEMS)
           .map((item) => {
             const subscription = subscriptionMap.get(item.subscriptionId);
+            const dueTimestamp = item.reminderDate || item.nextBillingDate;
 
             return {
               title: item.subscriptionName,
-              dueIn: formatDueIn(item.nextBillingDate),
+              dueIn: formatDueIn(dueTimestamp),
               amount: subscription
                 ? formatMoney(subscription.price, subscription.currency)
                 : "N/A",
@@ -65,10 +70,12 @@ export default function useRemainder() {
 
         if (isMounted) {
           setUpcomingRemainders(nextItems);
+          setTotalPendingRemainders(pendingRemainders.length);
         }
       } catch {
         if (isMounted) {
           setUpcomingRemainders([]);
+          setTotalPendingRemainders(0);
         }
       }
     };
@@ -80,5 +87,5 @@ export default function useRemainder() {
     };
   }, []);
 
-  return { upcomingRemainders };
+  return { upcomingRemainders, totalPendingRemainders };
 }

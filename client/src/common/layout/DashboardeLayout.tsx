@@ -30,12 +30,10 @@ function useDashboardStats(
 
 function DashboardeLayout() {
   const [activeView, setActiveView] = useState("Dashboard");
-  const { upcomingRemainders } = useRemainder();
+  const { upcomingRemainders, totalPendingRemainders } = useRemainder();
   const { subscriptions } = useDashboardSubscriptions();
 
-  // For total remainders, use the count of all items shown in the reminders panel
-  // (If you want to count all fetched remainders, you can expose them from the hook)
-  const totalRemainders = upcomingRemainders.length;
+  const totalRemainders = totalPendingRemainders;
 
   const isSubscriptionView = useMemo(
     () => activeView === "Subscriptions",
@@ -80,12 +78,12 @@ function DashboardeLayout() {
               <article className="panel reminders-panel">
                 <header>
                   <h3>Upcoming Remainders</h3>
-                  <small>Demo data</small>
+                  <small>Live data</small>
                 </header>
 
                 <ul>
                   {upcomingRemainders.map((item) => (
-                    <li key={item.title}>
+                    <li key={`${item.title}-${item.dueIn}-${item.amount}`}>
                       <div>
                         <p>{item.title}</p>
                         <span>{item.dueIn}</span>

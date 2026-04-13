@@ -6,11 +6,11 @@ type SidebarProps = {
 const navGroups = [
   {
     title: "Main",
-    items: ["Dashboard", "Subscriptions", "Categories"],
+    items: ["Dashboard", "Subscriptions"],
   },
   {
     title: "Organize",
-    items: ["Remainders", "Calendar", "Insights"],
+    items: ["Calendar"],
   },
 ];
 
