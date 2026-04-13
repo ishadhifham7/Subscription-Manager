@@ -21,9 +21,9 @@ type SubscriptionDemo = {
 };
 
 const categories: CategoryDemo[] = [
-  { id: "cat-ent", name: "Entertainment", color: "#52ff9f", icon: "TV" },
-  { id: "cat-work", name: "Work Tools", color: "#91ff66", icon: "Work" },
-  { id: "cat-cloud", name: "Cloud Services", color: "#65ffcf", icon: "Cloud" },
+  { id: "cat-ent", name: "Entertainment", color: "#f2f2f2", icon: "TV" },
+  { id: "cat-work", name: "Work Tools", color: "#bcbcbc", icon: "Work" },
+  { id: "cat-cloud", name: "Cloud Services", color: "#8f8f8f", icon: "Cloud" },
 ];
 
 const subscriptions: SubscriptionDemo[] = [
