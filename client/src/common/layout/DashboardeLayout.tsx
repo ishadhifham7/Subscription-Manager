@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import Subscription from "./Subscription";
+import CalenderPage from "./CalenderPage";
 import useRemainder from "../../modules/remiander/useRemainder";
 import useDashboardSubscriptions from "../../modules/subscription/useDashboardSubscriptions";
 
@@ -9,13 +10,7 @@ function useDashboardStats(
   totalRemainders: number,
 ) {
   const activeCount = subscriptions.filter((s) => s.status === "Active").length;
-  // Sum all subscription prices (parse from amount string)
-  const totalLKR = subscriptions.reduce((sum, s) => {
-    // Try to extract the numeric value from s.amount (e.g., "$123.45")
-    const match = s.amount.match(/[\d,.]+/);
-    const value = match ? parseFloat(match[0].replace(/,/g, "")) : 0;
-    return sum + value;
-  }, 0);
+  const totalLKR = subscriptions.reduce((sum, s) => sum + s.priceValue, 0);
   // Format as LKR
   const formattedLKR = `LKR ${totalLKR.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
   return [
@@ -46,6 +41,7 @@ function DashboardeLayout() {
     () => activeView === "Subscriptions",
     [activeView],
   );
+  const isCalenderView = useMemo(() => activeView === "Calendar", [activeView]);
 
   const stats = useDashboardStats(subscriptions, totalRemainders);
 
@@ -56,6 +52,8 @@ function DashboardeLayout() {
       <main className="dashboard-main">
         {isSubscriptionView ? (
           <Subscription />
+        ) : isCalenderView ? (
+          <CalenderPage subscriptions={subscriptions} />
         ) : (
           <>
             <section className="top-strip">

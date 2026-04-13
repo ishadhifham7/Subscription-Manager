@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 
-type DashboardSubscription = {
+export type DashboardSubscription = {
+  id: string;
   name: string;
   cycle: "Weekly" | "Monthly" | "Yearly";
   nextCharge: string;
+  nextChargeTimestamp: number | null;
   status: "Active" | "Paused";
   amount: string;
+  priceValue: number;
 };
 
 function formatMoney(value: number, currency: string) {
@@ -47,12 +50,27 @@ export default function useDashboardSubscriptions() {
           // fallback to 'Monthly' if unknown
           const status: "Active" | "Paused" =
             item.active === false ? "Paused" : "Active";
+          const nextChargeTimestamp =
+            typeof item.nextBillingDate === "number"
+              ? item.nextBillingDate
+              : null;
+          const priceValue =
+            typeof item.price === "number" && Number.isFinite(item.price)
+              ? item.price
+              : 0;
+          const currency =
+            typeof item.currency === "string" && item.currency.trim()
+              ? item.currency
+              : "USD";
           return {
+            id: String(item.id ?? item.name ?? ""),
             name: item.name,
             cycle,
-            nextCharge: formatDate(item.nextBillingDate),
+            nextCharge: formatDate(nextChargeTimestamp ?? 0),
+            nextChargeTimestamp,
             status,
-            amount: formatMoney(item.price, item.currency),
+            amount: formatMoney(priceValue, currency),
+            priceValue,
           };
         });
         if (isMounted) setSubscriptions(mapped);
