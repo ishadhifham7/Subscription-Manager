@@ -126,6 +126,16 @@ function Subscription() {
   const [addSubscriptionError, setAddSubscriptionError] = useState<
     string | null
   >(null);
+  const [isSubscriptionDetailsModalOpen, setIsSubscriptionDetailsModalOpen] =
+    useState(false);
+  const [activeSubscription, setActiveSubscription] =
+    useState<SubscriptionModel | null>(null);
+  const [isDeleteSubscriptionModalOpen, setIsDeleteSubscriptionModalOpen] =
+    useState(false);
+  const [isDeletingSubscription, setIsDeletingSubscription] = useState(false);
+  const [deleteSubscriptionError, setDeleteSubscriptionError] = useState<
+    string | null
+  >(null);
   const [subscriptionForm, setSubscriptionForm] = useState({
     name: "",
     description: "",
@@ -409,6 +419,76 @@ function Subscription() {
     }
   };
 
+  const openSubscriptionDetailsModal = (subscription: SubscriptionModel) => {
+    setActiveSubscription(subscription);
+    setDeleteSubscriptionError(null);
+    setIsDeleteSubscriptionModalOpen(false);
+    setIsSubscriptionDetailsModalOpen(true);
+  };
+
+  const closeSubscriptionDetailsModal = () => {
+    if (isDeletingSubscription) {
+      return;
+    }
+
+    setIsSubscriptionDetailsModalOpen(false);
+    setActiveSubscription(null);
+    setDeleteSubscriptionError(null);
+    setIsDeleteSubscriptionModalOpen(false);
+  };
+
+  const openDeleteSubscriptionModal = () => {
+    setDeleteSubscriptionError(null);
+    setIsDeleteSubscriptionModalOpen(true);
+  };
+
+  const closeDeleteSubscriptionModal = () => {
+    if (isDeletingSubscription) {
+      return;
+    }
+
+    setDeleteSubscriptionError(null);
+    setIsDeleteSubscriptionModalOpen(false);
+  };
+
+  const handleDeleteSubscription = async () => {
+    if (!activeSubscription) {
+      return;
+    }
+
+    setIsDeletingSubscription(true);
+    setDeleteSubscriptionError(null);
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/subscriptions/${encodeURIComponent(activeSubscription.id)}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to delete subscription");
+      }
+
+      setSubscriptions((prev) =>
+        prev.filter(
+          (subscription) => subscription.id !== activeSubscription.id,
+        ),
+      );
+      closeSubscriptionDetailsModal();
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Could not delete subscription. Please try again.";
+      setDeleteSubscriptionError(message);
+    } finally {
+      setIsDeletingSubscription(false);
+    }
+  };
+
   return (
     <section className="subscription-page">
       <header className="top-strip">
@@ -485,7 +565,20 @@ function Subscription() {
               <div className="subscription-card-row">
                 {relatedSubscriptions.length > 0 ? (
                   relatedSubscriptions.map((sub) => (
-                    <section key={sub.id} className="subscription-card">
+                    <section
+                      key={sub.id}
+                      className="subscription-card"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openSubscriptionDetailsModal(sub)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          openSubscriptionDetailsModal(sub);
+                        }
+                      }}
+                      aria-label={`Open details for ${sub.name}`}
+                    >
                       <div className="subscription-card-head">
                         <h4>{sub.name}</h4>
                         <span
@@ -495,28 +588,20 @@ function Subscription() {
                         </span>
                       </div>
 
-                      <p className="subscription-description">
-                        {sub.description}
+                      <p className="subscription-price">
+                        {formatMoney(sub.price, sub.currency)}
                       </p>
 
-                      <dl>
-                        <div>
-                          <dt>Price</dt>
-                          <dd>{formatMoney(sub.price, sub.currency)}</dd>
+                      <div className="subscription-meta-row">
+                        <div className="subscription-meta-item">
+                          <span>Cycle</span>
+                          <strong>{sub.billingCycle}</strong>
                         </div>
-                        <div>
-                          <dt>Billing Cycle</dt>
-                          <dd>{sub.billingCycle}</dd>
+                        <div className="subscription-meta-item">
+                          <span>Next Billing</span>
+                          <strong>{formatDate(sub.nextBillingDate)}</strong>
                         </div>
-                        <div>
-                          <dt>Reminder</dt>
-                          <dd>{sub.reminderDaysBefore} days before</dd>
-                        </div>
-                        <div>
-                          <dt>Next Billing</dt>
-                          <dd>{formatDate(sub.nextBillingDate)}</dd>
-                        </div>
-                      </dl>
+                      </div>
                     </section>
                   ))
                 ) : (
@@ -819,6 +904,150 @@ function Subscription() {
                 disabled={isDeletingCategory}
               >
                 {isDeletingCategory ? "Deleting..." : "Delete Category"}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isSubscriptionDetailsModalOpen && activeSubscription ? (
+        <div
+          className="create-category-modal-overlay"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeSubscriptionDetailsModal();
+            }
+          }}
+        >
+          <section
+            className="subscription-details-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Subscription details"
+          >
+            <div className="subscription-details-head">
+              <div>
+                <p className="subscription-details-kicker">Subscription</p>
+                <h3>{activeSubscription.name}</h3>
+              </div>
+              <span
+                className={
+                  activeSubscription.active ? "chip active" : "chip paused"
+                }
+              >
+                {activeSubscription.active ? "Active" : "Paused"}
+              </span>
+            </div>
+
+            <p className="subscription-details-price">
+              {formatMoney(
+                activeSubscription.price,
+                activeSubscription.currency,
+              )}
+            </p>
+
+            <div className="subscription-details-grid">
+              <div className="subscription-details-item">
+                <span>Description</span>
+                <strong>{activeSubscription.description || "-"}</strong>
+              </div>
+              <div className="subscription-details-item">
+                <span>Billing Cycle</span>
+                <strong>{activeSubscription.billingCycle}</strong>
+              </div>
+              <div className="subscription-details-item">
+                <span>Reminder</span>
+                <strong>
+                  {activeSubscription.reminderDaysBefore} day
+                  {activeSubscription.reminderDaysBefore === 1 ? "" : "s"}{" "}
+                  before
+                </strong>
+              </div>
+              <div className="subscription-details-item">
+                <span>Next Billing</span>
+                <strong>
+                  {formatDate(activeSubscription.nextBillingDate)}
+                </strong>
+              </div>
+              <div className="subscription-details-item">
+                <span>Category</span>
+                <strong>
+                  {categories.find(
+                    (category) => category.id === activeSubscription.categoryId,
+                  )?.name || activeSubscription.categoryId}
+                </strong>
+              </div>
+              <div className="subscription-details-item">
+                <span>Currency</span>
+                <strong>{activeSubscription.currency}</strong>
+              </div>
+            </div>
+
+            <div className="subscription-details-actions">
+              <button
+                type="button"
+                className="create-category-cancel"
+                onClick={closeSubscriptionDetailsModal}
+                disabled={isDeletingSubscription}
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                className="delete-category-confirm"
+                onClick={openDeleteSubscriptionModal}
+                disabled={isDeletingSubscription}
+              >
+                Delete Subscription
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {isDeleteSubscriptionModalOpen && activeSubscription ? (
+        <div
+          className="create-category-modal-overlay"
+          role="presentation"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              closeDeleteSubscriptionModal();
+            }
+          }}
+        >
+          <section
+            className="create-category-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete subscription"
+          >
+            <h3>Delete Subscription</h3>
+            <p className="delete-category-text">
+              Are you sure you want to delete "{activeSubscription.name}"? This
+              action cannot be undone.
+            </p>
+
+            {deleteSubscriptionError ? (
+              <p className="form-error-text">{deleteSubscriptionError}</p>
+            ) : null}
+
+            <div className="create-category-actions">
+              <button
+                type="button"
+                className="create-category-cancel"
+                onClick={closeDeleteSubscriptionModal}
+                disabled={isDeletingSubscription}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="delete-category-confirm"
+                onClick={handleDeleteSubscription}
+                disabled={isDeletingSubscription}
+              >
+                {isDeletingSubscription ? "Deleting..." : "Delete Subscription"}
               </button>
             </div>
           </section>
