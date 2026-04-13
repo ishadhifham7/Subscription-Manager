@@ -1,77 +1,53 @@
 import { useMemo, useState } from "react";
 import Sidebar from "./Sidebar";
 import Subscription from "./Subscription";
+import useRemainder from "../../modules/remiander/useRemainder";
+import useDashboardSubscriptions from "../../modules/subscription/useDashboardSubscriptions";
 
-type Stat = {
-  label: string;
-  value: string;
-  change: string;
-};
-
-type DemoReminder = {
-  title: string;
-  dueIn: string;
-  amount: string;
-};
-
-type DemoSubscription = {
-  name: string;
-  cycle: "Weekly" | "Monthly" | "Yearly";
-  nextCharge: string;
-  status: "Active" | "Paused";
-  amount: string;
-};
-
-const stats: Stat[] = [
-  { label: "Active Subscriptions", value: "14", change: "+2 this month" },
-  { label: "Monthly Spend", value: "$186.47", change: "-8% from last month" },
-  { label: "Upcoming Charges", value: "6", change: "3 in next 3 days" },
-];
-
-const reminders: DemoReminder[] = [
-  { title: "Notion Pro", dueIn: "in 2 days", amount: "$12.00" },
-  { title: "YouTube Premium", dueIn: "in 3 days", amount: "$11.99" },
-  { title: "Figma Professional", dueIn: "in 3 days", amount: "$15.00" },
-];
-
-const subscriptions: DemoSubscription[] = [
-  {
-    name: "Netflix",
-    cycle: "Monthly",
-    nextCharge: "Apr 15, 2026",
-    status: "Active",
-    amount: "$15.99",
-  },
-  {
-    name: "Spotify",
-    cycle: "Monthly",
-    nextCharge: "Apr 16, 2026",
-    status: "Active",
-    amount: "$10.99",
-  },
-  {
-    name: "AWS Lightsail",
-    cycle: "Monthly",
-    nextCharge: "Apr 19, 2026",
-    status: "Paused",
-    amount: "$32.00",
-  },
-  {
-    name: "ChatGPT Plus",
-    cycle: "Monthly",
-    nextCharge: "Apr 20, 2026",
-    status: "Active",
-    amount: "$20.00",
-  },
-];
+function useDashboardStats(
+  subscriptions: ReturnType<typeof useDashboardSubscriptions>["subscriptions"],
+  totalRemainders: number,
+) {
+  const activeCount = subscriptions.filter((s) => s.status === "Active").length;
+  // Sum all subscription prices (parse from amount string)
+  const totalLKR = subscriptions.reduce((sum, s) => {
+    // Try to extract the numeric value from s.amount (e.g., "$123.45")
+    const match = s.amount.match(/[\d,.]+/);
+    const value = match ? parseFloat(match[0].replace(/,/g, "")) : 0;
+    return sum + value;
+  }, 0);
+  // Format as LKR
+  const formattedLKR = `LKR ${totalLKR.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+  return [
+    {
+      label: "Active Subscriptions",
+      value: String(activeCount),
+      change: "+2 this month",
+    },
+    {
+      label: "Monthly Spend",
+      value: formattedLKR,
+      change: "-8% from last month",
+    },
+    { label: "Total Remainders", value: String(totalRemainders), change: "" },
+  ];
+}
 
 function DashboardeLayout() {
   const [activeView, setActiveView] = useState("Dashboard");
+  const { upcomingRemainders } = useRemainder();
+  const { subscriptions } = useDashboardSubscriptions();
+
+  // For total remainders, use the count of all items shown in the reminders panel
+  // (If you want to count all fetched remainders, you can expose them from the hook)
+  const totalRemainders = upcomingRemainders.length;
 
   const isSubscriptionView = useMemo(
     () => activeView === "Subscriptions",
     [activeView],
   );
+
+  const stats = useDashboardStats(subscriptions, totalRemainders);
 
   return (
     <div className="dashboard-shell">
@@ -110,7 +86,7 @@ function DashboardeLayout() {
                 </header>
 
                 <ul>
-                  {reminders.map((item) => (
+                  {upcomingRemainders.map((item) => (
                     <li key={item.title}>
                       <div>
                         <p>{item.title}</p>
