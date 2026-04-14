@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { apiClient } from "../../api/client";
 
 type BillingCycle = "WEEKLY" | "MONTHLY" | "YEARLY";
 
@@ -38,9 +39,6 @@ type SubscriptionModel = {
   active: boolean;
   nextBillingDate: number;
 };
-
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
 
 type SubscriptionApiResponse = {
   id: string;
@@ -151,18 +149,12 @@ function Subscription() {
       setPageError(null);
 
       try {
-        const [categoriesResponse, subscriptionsResponse] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/categories`),
-          fetch(`${API_BASE_URL}/api/subscriptions`),
+        const [categoriesData, subscriptionsData] = await Promise.all([
+          apiClient<Category[]>("/api/categories", { method: "GET" }),
+          apiClient<SubscriptionApiResponse[]>("/api/subscriptions", {
+            method: "GET",
+          }),
         ]);
-
-        if (!categoriesResponse.ok || !subscriptionsResponse.ok) {
-          throw new Error("Failed to load data from backend");
-        }
-
-        const categoriesData: Category[] = await categoriesResponse.json();
-        const subscriptionsData: SubscriptionApiResponse[] =
-          await subscriptionsResponse.json();
 
         const normalizedCategories = categoriesData.map(toCategoryModel);
         const normalizedSubscriptions =
@@ -241,20 +233,10 @@ function Subscription() {
         icon: categoryForm.icon.trim() || "Tag",
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/categories`, {
+      const createdCategory = await apiClient<Category>("/api/categories", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify(payload),
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to create category");
-      }
-
-      const createdCategory: Category = await response.json();
       setCategories((prev) => [toCategoryModel(createdCategory), ...prev]);
       setIsCreateModalOpen(false);
       resetCreateForm();
@@ -333,21 +315,13 @@ function Subscription() {
         reminderDaysBefore: parsedReminderDays,
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/subscriptions`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const createdSubscription = await apiClient<SubscriptionApiResponse>(
+        "/api/subscriptions",
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to create subscription");
-      }
-
-      const createdSubscription: SubscriptionApiResponse =
-        await response.json();
+      );
       setSubscriptions((prev) => [
         toSubscriptionModel(createdSubscription),
         ...prev,
@@ -389,17 +363,12 @@ function Subscription() {
     setDeleteCategoryError(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/categories/${encodeURIComponent(activeCategoryForDelete.id)}`,
+      await apiClient<string>(
+        `/api/categories/${encodeURIComponent(activeCategoryForDelete.id)}`,
         {
           method: "DELETE",
         },
       );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to delete category");
-      }
 
       setCategories((prev) =>
         prev.filter((category) => category.id !== activeCategoryForDelete.id),
@@ -460,17 +429,12 @@ function Subscription() {
     setDeleteSubscriptionError(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/subscriptions/${encodeURIComponent(activeSubscription.id)}`,
+      await apiClient<void>(
+        `/api/subscriptions/${encodeURIComponent(activeSubscription.id)}`,
         {
           method: "DELETE",
         },
       );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Failed to delete subscription");
-      }
 
       setSubscriptions((prev) =>
         prev.filter(

@@ -29,8 +29,11 @@ public class RemainderRepository {
         return true;
     }
 
-    public List<Remainder> findAll() throws Exception {
-        QuerySnapshot snapshot = firestore.collection(COLLECTION).get().get();
+    public List<Remainder> findAllByUid(String uid) throws Exception {
+        QuerySnapshot snapshot = firestore.collection(COLLECTION)
+            .whereEqualTo("uid", uid)
+            .get()
+            .get();
         List<Remainder> list = new ArrayList<>();
 
         for (DocumentSnapshot doc : snapshot.getDocuments()) {

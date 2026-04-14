@@ -25,19 +25,14 @@ public class RemainderService {
 
     @Scheduled(cron = "0 0 * * * *", zone = "UTC")
     public void syncScheduledRemainders() {
-        try {
-            syncRemainders();
-        } catch (Exception ex) {
-            // Keep scheduler alive even if one sync run fails.
-            System.err.println("Remainder sync failed: " + ex.getMessage());
-        }
+        // Scheduler is intentionally disabled for per-user sync because backend is stateless.
     }
 
-    public int syncRemainders() throws Exception {
+    public int syncRemainders(String uid) throws Exception {
         long now = System.currentTimeMillis();
         int createdCount = 0;
 
-        List<Subscription> subscriptions = subscriptionRepository.findAll();
+        List<Subscription> subscriptions = subscriptionRepository.findAllByUid(uid);
 
         for (Subscription sub : subscriptions) {
             if (!Boolean.TRUE.equals(sub.getActive()) || sub.getBillingCycle() == null || sub.getNextBillingDate() == null) {
@@ -56,7 +51,7 @@ public class RemainderService {
                 continue;
             }
 
-            Remainder remainder = buildRemainder(sub, nextBillingDate, reminderDate, daysBefore, now);
+            Remainder remainder = buildRemainder(uid, sub, nextBillingDate, reminderDate, daysBefore, now);
             if (remainderRepository.saveIfAbsent(remainder)) {
                 createdCount++;
             }
@@ -65,8 +60,8 @@ public class RemainderService {
         return createdCount;
     }
 
-    public List<RemainderResponse> getAllRemainders() throws Exception {
-        return remainderRepository.findAll()
+    public List<RemainderResponse> getAllRemainders(String uid) throws Exception {
+        return remainderRepository.findAllByUid(uid)
             .stream()
             .sorted(Comparator.comparing(Remainder::getReminderDate).reversed())
             .map(RemainderMapper::toResponse)
@@ -74,6 +69,7 @@ public class RemainderService {
     }
 
     private Remainder buildRemainder(
+        String uid,
         Subscription sub,
         long nextBillingDate,
         long reminderDate,
@@ -81,7 +77,8 @@ public class RemainderService {
         long now
     ) {
         Remainder remainder = new Remainder();
-        remainder.setId(buildCycleId(sub.getId(), nextBillingDate));
+        remainder.setId(buildCycleId(uid, sub.getId(), nextBillingDate));
+        remainder.setUid(uid);
         remainder.setSubscriptionId(sub.getId());
         remainder.setSubscriptionName(sub.getName());
         remainder.setNextBillingDate(nextBillingDate);
@@ -126,7 +123,7 @@ public class RemainderService {
         return next.toInstant().toEpochMilli();
     }
 
-    private String buildCycleId(String subscriptionId, long nextBillingDate) {
-        return subscriptionId + "_" + nextBillingDate;
+    private String buildCycleId(String uid, String subscriptionId, long nextBillingDate) {
+        return uid + "_" + subscriptionId + "_" + nextBillingDate;
     }
 }

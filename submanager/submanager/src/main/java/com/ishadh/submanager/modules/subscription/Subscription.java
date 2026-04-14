@@ -9,6 +9,8 @@ public class Subscription {
     @DocumentId
     private String id;
 
+    private String uid;
+
     private String name;
     private String description;
     private double price;

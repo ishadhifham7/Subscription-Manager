@@ -9,6 +9,8 @@ public class Category {
     @DocumentId
     private String id;
 
+    private String uid;
+
     private String name;
     private String color;
     private String icon;

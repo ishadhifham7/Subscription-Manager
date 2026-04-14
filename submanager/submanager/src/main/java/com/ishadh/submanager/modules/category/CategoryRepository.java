@@ -29,12 +29,14 @@ public class CategoryRepository {
         return category;
     }
 
-    public List<Category> findAll() throws Exception {
+    public List<Category> findAllByUid(String uid) throws Exception {
 
         List<Category> list = new ArrayList<>();
 
         ApiFuture<QuerySnapshot> future =
-                firestore.collection(COLLECTION).get();
+            firestore.collection(COLLECTION)
+                .whereEqualTo("uid", uid)
+                .get();
 
         for (DocumentSnapshot doc : future.get().getDocuments()) {
             Category category = doc.toObject(Category.class);
@@ -44,11 +46,21 @@ public class CategoryRepository {
         return list;
     }
 
-    public void deleteById(String id) throws Exception {
+    public boolean deleteByIdAndUid(String id, String uid) throws Exception {
 
-        firestore.collection(COLLECTION)
-                .document(id)
-                .delete()
-                .get();
+        DocumentReference docRef = firestore.collection(COLLECTION).document(id);
+        DocumentSnapshot snapshot = docRef.get().get();
+
+        if (!snapshot.exists()) {
+            return false;
+        }
+
+        Category existing = snapshot.toObject(Category.class);
+        if (existing == null || !uid.equals(existing.getUid())) {
+            return false;
+        }
+
+        docRef.delete().get();
+        return true;
     }
 }

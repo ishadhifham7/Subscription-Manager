@@ -11,9 +11,10 @@ public class SubscriptionService {
     @Autowired
     private SubscriptionRepository repository;
 
-    public SubscriptionResponse createSubscription(SubscriptionRequest request) throws Exception {
+    public SubscriptionResponse createSubscription(SubscriptionRequest request, String uid) throws Exception {
 
         Subscription sub = SubscriptionMapper.toEntity(request);
+        sub.setUid(uid);
 
         long nextBilling = calculateNextBilling(
                 sub.getBillingCycle(),
@@ -27,16 +28,16 @@ public class SubscriptionService {
         return SubscriptionMapper.toResponse(saved);
     }
 
-    public List<SubscriptionResponse> getAllSubscriptions() throws Exception {
+    public List<SubscriptionResponse> getAllSubscriptions(String uid) throws Exception {
 
-        return repository.findAll()
+        return repository.findAllByUid(uid)
                 .stream()
                 .map(sub -> SubscriptionMapper.toResponse(sub))
                 .toList();
     }
 
-    public boolean deleteSubscription(String id) throws Exception {
-        return repository.deleteById(id);
+    public boolean deleteSubscription(String id, String uid) throws Exception {
+        return repository.deleteByIdAndUid(id, uid);
     }
 
     // 🔥 ENUM-based logic (clean & safe)

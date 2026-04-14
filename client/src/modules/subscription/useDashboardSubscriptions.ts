@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiClient } from "../../api/client";
 
 export type DashboardSubscription = {
   id: string;
@@ -37,11 +38,9 @@ export default function useDashboardSubscriptions() {
     let isMounted = true;
     const fetchData = async () => {
       try {
-        const API_BASE_URL =
-          import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080";
-        const response = await fetch(`${API_BASE_URL}/api/subscriptions`);
-        if (!response.ok) throw new Error("Failed to load subscriptions");
-        const data = await response.json();
+        const data = await apiClient<any[]>("/api/subscriptions", {
+          method: "GET",
+        });
         const mapped = (data as any[]).map((item) => {
           let cycle: "Weekly" | "Monthly" | "Yearly" = "Monthly";
           if (item.billingCycle === "WEEKLY") cycle = "Weekly";

@@ -11,24 +11,25 @@ public class CategoryService {
     @Autowired
     private CategoryRepository repository;
 
-    public CategoryResponse createCategory(CategoryRequest request) throws Exception {
+    public CategoryResponse createCategory(CategoryRequest request, String uid) throws Exception {
 
         Category category = CategoryMapper.toEntity(request);
+        category.setUid(uid);
 
         Category saved = repository.save(category);
 
         return CategoryMapper.toResponse(saved);
     }
 
-    public List<CategoryResponse> getAllCategories() throws Exception {
+    public List<CategoryResponse> getAllCategories(String uid) throws Exception {
 
-        return repository.findAll()
+        return repository.findAllByUid(uid)
                 .stream()
                 .map(CategoryMapper::toResponse)
                 .toList();
     }
 
-    public void deleteCategory(String id) throws Exception {
-        repository.deleteById(id);
+    public boolean deleteCategory(String id, String uid) throws Exception {
+        return repository.deleteByIdAndUid(id, uid);
     }
 }

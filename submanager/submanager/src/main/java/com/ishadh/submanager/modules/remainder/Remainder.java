@@ -10,6 +10,8 @@ public class Remainder {
     @DocumentId
     private String id;
 
+    private String uid;
+
     private String subscriptionId;
     private String subscriptionName;
     private Long nextBillingDate;

@@ -29,12 +29,14 @@ public class SubscriptionRepository {
         return sub;
     }
 
-    public List<Subscription> findAll() throws Exception {
+    public List<Subscription> findAllByUid(String uid) throws Exception {
 
         List<Subscription> list = new ArrayList<>();
 
         ApiFuture<QuerySnapshot> future =
-                firestore.collection(COLLECTION).get();
+            firestore.collection(COLLECTION)
+                .whereEqualTo("uid", uid)
+                .get();
 
         for (DocumentSnapshot doc : future.get().getDocuments()) {
             Subscription sub = doc.toObject(Subscription.class);
@@ -44,12 +46,17 @@ public class SubscriptionRepository {
         return list;
     }
 
-    public boolean deleteById(String id) throws Exception {
+    public boolean deleteByIdAndUid(String id, String uid) throws Exception {
 
         DocumentReference docRef = firestore.collection(COLLECTION).document(id);
         DocumentSnapshot snapshot = docRef.get().get();
 
         if (!snapshot.exists()) {
+            return false;
+        }
+
+        Subscription existing = snapshot.toObject(Subscription.class);
+        if (existing == null || !uid.equals(existing.getUid())) {
             return false;
         }
 
