@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { authService } from "../auth/auth.service";
-import { useAuth } from "../auth/useAuth";
 import { createOrFetchUser, getUserProfile } from "../api/user.api";
 import type { UserProfile } from "../types/user.types";
 
 export default function UserPage() {
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,11 +26,6 @@ export default function UserPage() {
     void loadProfile();
   }, []);
 
-  const handleLogout = async () => {
-    await authService.logout();
-    navigate("/login");
-  };
-
   return (
     <main className="auth-shell">
       <section className="auth-card">
@@ -45,24 +35,17 @@ export default function UserPage() {
 
         {!loading && !error && (
           <>
-            <p className="auth-subtitle">
-              Firebase Auth user is active and backend token verification
-              succeeded.
-            </p>
+            <p className="auth-subtitle">Profile loaded from backend.</p>
             <dl className="profile-list">
               <dt>Email</dt>
-              <dd>{profile?.email ?? user?.email ?? "Unknown"}</dd>
+              <dd>{profile?.email ?? "Unknown"}</dd>
               <dt>UID</dt>
-              <dd>{profile?.uid ?? user?.uid ?? "Unknown"}</dd>
+              <dd>{profile?.uid ?? "Unknown"}</dd>
             </dl>
           </>
         )}
 
         {error && <p className="auth-error">{error}</p>}
-
-        <button type="button" onClick={handleLogout}>
-          Log out
-        </button>
       </section>
     </main>
   );
