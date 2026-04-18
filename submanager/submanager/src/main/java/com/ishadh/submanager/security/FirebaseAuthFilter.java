@@ -16,6 +16,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class FirebaseAuthFilter extends OncePerRequestFilter {
 
+    private static final String[] LOCAL_ALLOWED_ORIGINS = {
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174"
+    };
+
     public static final String ATTR_UID = "firebaseUid";
     public static final String ATTR_EMAIL = "firebaseEmail";
 
@@ -76,8 +83,11 @@ public class FirebaseAuthFilter extends OncePerRequestFilter {
         if (origin == null) {
             origin = "http://localhost:5173";
         }
-        if ("http://localhost:5173".equals(origin) || "http://127.0.0.1:5173".equals(origin)) {
-            response.setHeader("Access-Control-Allow-Origin", origin);
+        for (String allowedOrigin : LOCAL_ALLOWED_ORIGINS) {
+            if (allowedOrigin.equals(origin)) {
+                response.setHeader("Access-Control-Allow-Origin", origin);
+                break;
+            }
         }
         response.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
         response.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type");
