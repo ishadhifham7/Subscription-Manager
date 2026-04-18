@@ -1,5 +1,6 @@
 import { authClient } from "./authClient";
 import { isRedirectProcessing } from "./authClient";
+import { initializeAuthClient } from "./authClient";
 import type { AuthUser } from "./types";
 
 // 🔐 Login
@@ -11,6 +12,8 @@ export const signIn = async (
   if (isRedirectProcessing()) {
     return;
   }
+
+  await initializeAuthClient();
 
   const authenticated = await authClient.isAuthenticated();
 

@@ -1,5 +1,9 @@
 package com.ishadh.submanager.modules.subscription;
 
+import com.ishadh.submanager.security.CurrentUserResolver;
+import com.ishadh.submanager.security.CurrentUserResolver.ResolvedUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,24 +14,33 @@ import java.util.List;
 @RequestMapping("/api/subscriptions")
 public class SubscriptionController {
 
-    private static final String DEFAULT_UID = "local-dev-user";
+    private static final Logger log = LoggerFactory.getLogger(SubscriptionController.class);
 
     @Autowired
     private SubscriptionService service;
+
+    @Autowired
+    private CurrentUserResolver currentUserResolver;
 
     @PostMapping
     public ResponseEntity<SubscriptionResponse> createSubscription(
             @RequestBody SubscriptionRequest request
     ) throws Exception {
 
-        return ResponseEntity.ok(service.createSubscription(request, DEFAULT_UID));
+        ResolvedUser resolvedUser = currentUserResolver.resolveCurrentUser();
+        log.debug("endpoint=/api/subscriptions method=POST jwtPresent={} resolvedUserId={} authStatus={}", resolvedUser.fromJwt(), resolvedUser.userId(), resolvedUser.fromJwt() ? "authenticated" : "fallback");
+
+        return ResponseEntity.ok(service.createSubscription(request, resolvedUser.userId()));
     }
 
     @GetMapping
     public ResponseEntity<List<SubscriptionResponse>> getAllSubscriptions()
             throws Exception {
 
-        return ResponseEntity.ok(service.getAllSubscriptions(DEFAULT_UID));
+        ResolvedUser resolvedUser = currentUserResolver.resolveCurrentUser();
+        log.debug("endpoint=/api/subscriptions method=GET jwtPresent={} resolvedUserId={} authStatus={}", resolvedUser.fromJwt(), resolvedUser.userId(), resolvedUser.fromJwt() ? "authenticated" : "fallback");
+
+        return ResponseEntity.ok(service.getAllSubscriptions(resolvedUser.userId()));
     }
 
     @DeleteMapping("/{id}")
@@ -35,7 +48,10 @@ public class SubscriptionController {
             @PathVariable String id
     ) throws Exception {
 
-        boolean deleted = service.deleteSubscription(id, DEFAULT_UID);
+        ResolvedUser resolvedUser = currentUserResolver.resolveCurrentUser();
+        log.debug("endpoint=/api/subscriptions/{} method=DELETE jwtPresent={} resolvedUserId={} authStatus={}", id, resolvedUser.fromJwt(), resolvedUser.userId(), resolvedUser.fromJwt() ? "authenticated" : "fallback");
+
+        boolean deleted = service.deleteSubscription(id, resolvedUser.userId());
 
         if (!deleted) {
             return ResponseEntity.notFound().build();

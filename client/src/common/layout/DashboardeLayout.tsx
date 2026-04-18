@@ -1,9 +1,12 @@
-import { useMemo, useState } from "react";
+import { useContext, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Subscription from "./Subscription";
 import CalenderPage from "./CalenderPage";
 import useRemainder from "../../modules/remiander/useRemainder";
 import useDashboardSubscriptions from "../../modules/subscription/useDashboardSubscriptions";
+import { AuthContext } from "../../auth/authContext";
+import { signOut } from "../../auth/authService";
 
 function useDashboardStats(
   subscriptions: ReturnType<typeof useDashboardSubscriptions>["subscriptions"],
@@ -29,7 +32,10 @@ function useDashboardStats(
 }
 
 function DashboardeLayout() {
+  const context = useContext(AuthContext);
+  const navigate = useNavigate();
   const [activeView, setActiveView] = useState("Dashboard");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { upcomingRemainders, totalPendingRemainders } = useRemainder();
   const { subscriptions } = useDashboardSubscriptions();
 
@@ -43,9 +49,42 @@ function DashboardeLayout() {
 
   const stats = useDashboardStats(subscriptions, totalRemainders);
 
+  const handleLogout = async () => {
+    if (!context || isLoggingOut) {
+      return;
+    }
+
+    setIsLoggingOut(true);
+
+    const requireAuth =
+      (import.meta.env.VITE_REQUIRE_AUTH ?? "false").toLowerCase() === "true";
+
+    try {
+      if (requireAuth) {
+        await signOut();
+      }
+    } finally {
+      context.setAuth({
+        loading: false,
+        isProcessingRedirect: false,
+        isAuthenticated: false,
+        user: null,
+        accessToken: null,
+      });
+
+      setIsLoggingOut(false);
+      navigate("/login", { replace: true });
+    }
+  };
+
   return (
     <div className="dashboard-shell">
-      <Sidebar activeItem={activeView} onSelectItem={setActiveView} />
+      <Sidebar
+        activeItem={activeView}
+        onSelectItem={setActiveView}
+        onLogout={handleLogout}
+        isLoggingOut={isLoggingOut}
+      />
 
       <main className="dashboard-main">
         {isSubscriptionView ? (

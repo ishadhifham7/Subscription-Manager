@@ -1,6 +1,8 @@
 type SidebarProps = {
   activeItem: string;
   onSelectItem: (item: string) => void;
+  onLogout: () => Promise<void>;
+  isLoggingOut: boolean;
 };
 
 const navGroups = [
@@ -14,7 +16,12 @@ const navGroups = [
   },
 ];
 
-function Sidebar({ activeItem, onSelectItem }: SidebarProps) {
+function Sidebar({
+  activeItem,
+  onSelectItem,
+  onLogout,
+  isLoggingOut,
+}: SidebarProps) {
   return (
     <aside className="sidebar">
       <div className="brand-block">
@@ -49,6 +56,16 @@ function Sidebar({ activeItem, onSelectItem }: SidebarProps) {
       <div className="sidebar-footer">
         <p>Plan</p>
         <strong>Pro Trial</strong>
+        <button
+          type="button"
+          className="logout-button"
+          onClick={() => {
+            void onLogout();
+          }}
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? "Logging out..." : "Logout"}
+        </button>
       </div>
     </aside>
   );
