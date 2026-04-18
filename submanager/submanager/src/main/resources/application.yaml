@@ -2,6 +2,14 @@ spring:
   application:
     name: submanager
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://api.eu.asgardeo.io/t/ishadh
+
+require-auth: false
+
 firebase:
   enabled: true
   project-id: subscription-manager-2b5bd

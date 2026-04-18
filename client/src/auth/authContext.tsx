@@ -11,6 +11,9 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const requireAuth =
+    (import.meta.env.VITE_REQUIRE_AUTH ?? "false").toLowerCase() === "true";
+
   const [auth, setAuth] = useState<AuthState>({
     loading: true,
     isProcessingRedirect: false,
@@ -23,6 +26,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let isMounted = true;
 
     const init = async () => {
+      if (!requireAuth) {
+        if (!isMounted) {
+          return;
+        }
+
+        setAuth({
+          loading: false,
+          isProcessingRedirect: false,
+          isAuthenticated: true,
+          user: null,
+          accessToken: null,
+        });
+        return;
+      }
+
       try {
         await initializeAuthClient();
 

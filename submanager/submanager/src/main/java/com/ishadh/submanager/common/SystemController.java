@@ -1,4 +1,4 @@
-package main.java.com.ishadh.submanager.common;
+package com.ishadh.submanager.common;
 
 import java.time.Instant;
 import java.util.Map;
