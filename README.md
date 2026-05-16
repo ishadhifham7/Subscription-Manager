@@ -38,7 +38,7 @@ Subscription Manager is a full-stack application that helps users track and mana
 
 Authentication is handled using **WSO2 Asgardeo**, implementing:
 
-- OAuth2 / OpenID Connect (OIDC)  
+- Authentication managed via Asgardeo 
 - Secure login and session management  
 - Protected routes and user-specific data access  
 
@@ -47,6 +47,5 @@ Authentication is handled using **WSO2 Asgardeo**, implementing:
 ## 🚀 Deployment
 
 - Backend services structured for scalable deployment  
-- Cloud-based database using Firebase Firestore  
-- Authentication managed via Asgardeo  
+- Cloud-based database using Firebase Firestore    
  
